@@ -5,6 +5,7 @@
 // #include <queue>   NOTE: Only use if your QueueList is not working
 #include <stack>
 #include "Behavior.h"
+#include "../QueueList/QueueList.h"
 
 namespace fullsail_ai { namespace fundamentals {
 
@@ -38,8 +39,88 @@ namespace fullsail_ai { namespace fundamentals {
 		return false;
 	}
 
+	DLLEXPORT size_t Behavior::getChildCount() const
+	{
+		return children.size();
+	}
+
 	//! \TODO
 	//!   - Implement the <code>Behavior</code> methods.
+	
+	DLLEXPORT Behavior* Behavior::getChild(size_t index)
+	{
+		if (index >= children.size())
+			return nullptr;
+
+		return children[index];
+	}
+
+	DLLEXPORT Behavior const* Behavior::getChild(size_t index) const
+	{
+		if (index >= children.size())
+			return nullptr;
+	
+		return children[index];
+	}
+
+	void Behavior::addChild(Behavior* child)
+	{
+		if (child == nullptr)
+			return;
+
+		child->parent = this;
+		children.push_back(child);
+	}
+
+	void traversePreOrder(const Behavior* current, void(*dataFunction)(Behavior const*))
+	{
+		if (current == nullptr)
+			return;
+
+		dataFunction(current);
+		for (int i = 0; i < current->getChildCount(); i++)
+		{
+			traversePreOrder(current->getChild(i), dataFunction);
+		}
+	}
+
+	void traversePostOrder(const Behavior* current, void(*dataFunction)(Behavior const*))
+	{
+		if (current == nullptr)
+			return;
+
+		for (int i = 0; i < current->getChildCount(); i++)
+		{
+			traversePostOrder(current->getChild(i), dataFunction);
+		}
+		dataFunction(current);
+	}
+
+	DLLEXPORT void Behavior::breadthFirstTraverse(void(*dataFunction)(Behavior const*)) const
+	{
+		QueueList<const Behavior*> queue;
+		queue.enqueue(this);
+		while (!queue.isEmpty())
+		{
+			const Behavior* current = queue.getFront();
+			dataFunction(queue.getFront());
+			for (int i = 0; i < current->getChildCount(); i++)
+			{
+				queue.enqueue(current->getChild(i));
+			}
+			queue.remove(current);
+		}
+	}
+
+	DLLEXPORT void Behavior::preOrderTraverse(void(*dataFunction)(Behavior const*)) const
+	{
+		traversePreOrder(this, dataFunction);
+	}
+
+	DLLEXPORT void Behavior::postOrderTraverse(void(*dataFunction)(Behavior const*)) const
+	{
+		traversePostOrder(this, dataFunction);
+	}
 
 
 }}  // namespace fullsail_ai::fundamentals
